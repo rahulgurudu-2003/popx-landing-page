@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const UserContext = createContext();
 
@@ -11,31 +11,66 @@ export const useUser = () => {
 };
 
 export const UserProvider = ({ children }) => {
-  const [currentScreen, setCurrentScreen] = useState('welcome');
-  const [history, setHistory] = useState(['welcome']);
-
-  const [users, setUsers] = useState([
-    {
-      fullName: 'Marry Doe',
-      phone: '9876543210',
-      email: 'Marry@Gmail.Com',
-      password: 'Password123',
-      companyName: 'PopX Studio',
-      isAgency: 'Yes',
-      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=250&h=250'
-    },
-    {
-      fullName: 'Kumar',
-      phone: '9876543210',
-      email: 'kumar@gmail.com',
-      password: 'Password123',
-      companyName: 'PopX Studio',
-      isAgency: 'Yes',
-      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=250&h=250'
+  const [users, setUsers] = useState(() => {
+    const saved = localStorage.getItem('popx_users');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+      }
     }
-  ]);
+    return [
+      {
+        fullName: 'Marry Doe',
+        phone: '9876543210',
+        email: 'Marry@Gmail.Com',
+        password: 'Password123',
+        companyName: 'PopX Studio',
+        isAgency: 'Yes',
+        avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=250&h=250'
+      },
+      {
+        fullName: 'Kumar',
+        phone: '9876543210',
+        email: 'kumar@gmail.com',
+        password: 'Password123',
+        companyName: 'PopX Studio',
+        isAgency: 'Yes',
+        avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=250&h=250'
+      }
+    ];
+  });
 
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem('popx_current_user');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+      }
+    }
+    return null;
+  });
+
+  const [currentScreen, setCurrentScreen] = useState(() => {
+    return localStorage.getItem('popx_current_user') ? 'profile' : 'welcome';
+  });
+
+  const [history, setHistory] = useState(() => {
+    return localStorage.getItem('popx_current_user') ? ['profile'] : ['welcome'];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('popx_users', JSON.stringify(users));
+  }, [users]);
+
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem('popx_current_user', JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem('popx_current_user');
+    }
+  }, [currentUser]);
 
   const navigateTo = (screen) => {
     setHistory((prev) => [...prev, screen]);

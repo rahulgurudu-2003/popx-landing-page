@@ -11,15 +11,18 @@ const LoginScreen = () => {
   });
   const [errors, setErrors] = useState({});
   const [isFormValid, setIsFormValid] = useState(false);
+  const [touched, setTouched] = useState({});
   const [submitError, setSubmitError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }));
-    }
     setSubmitError('');
+  };
+
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
   };
 
   useEffect(() => {
@@ -28,35 +31,35 @@ const LoginScreen = () => {
       const emailValid = emailRegex.test(formData.email.trim());
       const passwordValid = formData.password.length >= 6;
       setIsFormValid(emailValid && passwordValid);
+
+      const tempErrors = {};
+      if (formData.email.trim() && !emailValid) {
+        tempErrors.email = 'Please enter a valid email address';
+      }
+      if (formData.password && !passwordValid) {
+        tempErrors.password = 'Password must be at least 6 characters';
+      }
+
+      if (touched.email && !formData.email.trim()) {
+        tempErrors.email = 'Email address is required';
+      }
+      if (touched.password && !formData.password) {
+        tempErrors.password = 'Password is required';
+      }
+
+      setErrors(tempErrors);
     };
 
     validateForm();
-  }, [formData]);
+  }, [formData, touched]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    const tempErrors = {};
-    if (!formData.email.trim()) {
-      tempErrors.email = 'Email address is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      tempErrors.email = 'Please enter a valid email';
-    }
-
-    if (!formData.password) {
-      tempErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      tempErrors.password = 'Password must be at least 6 characters';
-    }
-
-    if (Object.keys(tempErrors).length > 0) {
-      setErrors(tempErrors);
-      return;
-    }
-
-    const result = loginUser(formData.email.trim(), formData.password.trim());
-    if (!result.success) {
-      setSubmitError(result.message || 'Invalid email or password');
+    if (isFormValid) {
+      const result = loginUser(formData.email.trim(), formData.password.trim());
+      if (!result.success) {
+        setSubmitError(result.message || 'Invalid email or password');
+      }
     }
   };
 
@@ -84,6 +87,7 @@ const LoginScreen = () => {
               name="email"
               value={formData.email}
               onChange={handleChange}
+              onBlur={handleBlur}
               error={errors.email}
               autoComplete="email"
             />
@@ -94,6 +98,7 @@ const LoginScreen = () => {
               name="password"
               value={formData.password}
               onChange={handleChange}
+              onBlur={handleBlur}
               error={errors.password}
               autoComplete="current-password"
             />
